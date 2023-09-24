@@ -2,6 +2,9 @@ import {ethers} from "hardhat";
 import RLP from "rlp";
 
 function serialize(decoded: any) {
+  if (Array.isArray(decoded))
+    return RLP.encode(decoded.map((el) => Object.values(el)));
+
   return RLP.encode(Object.values(decoded));
 }
 
@@ -31,26 +34,29 @@ async function main() {
   const ETHQL = await ethers.getContractFactory("contracts/ethql.sol:ETHQL", {libraries: {RLP: rlp}});
   const ethql = await ETHQL.deploy()
 
-
   const tableName = "Users";
-  const tableSchema = RLP.encode([["id", "uint32"], ["name", "string"], ["user_id", "uint32"]]);
+  const tableSchema = RLP.encode([["id", "uint32"], ["text", "string"], ["user_id", "uint32"]]);
   const tableDeployTxn = await ethql.getFunction("createTable").send(tableName, tableSchema);
   const tableDeployReceipt = await tableDeployTxn.wait();
   const tableAddress = (tableDeployReceipt!.logs[0] as any)["args"][0]; // TODO: not good
 
   console.log(`Table named "${tableName}" deployed at: ${tableAddress}`);
 
-  const row = {"id": 1, "name": "test", "user_id": 33};
-  const rowBytes = serialize(row);
+  const rows = [
+    {"id": 1, "text": "a", "user_id": 1},
+    {"id": 1, "text": "a", "user_id": 1},
+    {"id": 1, "text": "a", "user_id": 1}
+  ];
+  const rowBytes = serialize(rows);
 
-  console.log("Inserting:\n ", row);
+  console.log("Inserting:\n ", rows);
   console.log("RLP encoded:", "0x" + Buffer.from(rowBytes).toString("hex"), "(" + rowBytes.length + " bytes)")
   console.log("---------------------------");
 
-  const txn = await ethql.getFunction("insert").send(tableAddress, rowBytes);
+  const txn = await ethql.getFunction("bulkInsert").send(tableAddress, rowBytes);
   await txn.wait();
 
-  const select = await ethql.getFunction("select").call(null, tableAddress);
+  const select = await ethql.getFunction("select")(tableAddress);
 
   console.log("Recovering data from blockchain:", select, "(" + select.length + " bytes)")
   console.log("After deserializing the recovered data by schema:\n ", deserialize(select));

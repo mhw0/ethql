@@ -11,6 +11,9 @@ contract ETHQL {
   /* Emitted when a new row is inserted */
   event Inserted(address indexed tableAddr, bytes indexed data);
 
+  /* Emitted when many rows are inserted */
+  event BulkInserted(address indexed tableAddr, bytes indexed data);
+
   /* Emitted when many new row are inserted */
   event InsertedMany(address indexed tableAddr, bytes indexed data);
 
@@ -49,6 +52,20 @@ contract ETHQL {
 
     targetTable.insert(RLP.Element(data, RLP.FLAG_TYPE_LIST));
     emit Inserted(tableAddr, data);
+  }
+
+  /**
+   * Inserts many rows
+   * 
+   * @param tableAddr - Address of the table
+   * @param data - List of rows in RLP format
+   */
+  function bulkInsert(address tableAddr, bytes memory data) external {
+    Table targetTable = _tables[tableAddr];
+    require(targetTable.isTable() == true, "Table does not exist");
+
+    targetTable.bulkInsert(RLP.Element(data, RLP.FLAG_TYPE_LIST));
+    emit BulkInserted(tableAddr, data);
   }
 
   /**

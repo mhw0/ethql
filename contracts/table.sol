@@ -18,6 +18,10 @@ contract Table {
     RLP.push(data, _row);
   }
 
+  function bulkInsert(RLP.Element memory rows) external {
+    RLP.concatLhs(data, rows);
+  }
+
   function setSchema(RLP.Element memory _schema) external {
     schema = _schema;
   }

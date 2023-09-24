@@ -31,13 +31,12 @@ contract ETHQL {
    * @param tableName - Name of the table
    * @param schema - Schema of the table in RLP format
    */
-  function createTable(string memory tableName, bytes memory schema) public returns(address) { // TODO(mhw0): this should not return data
+  function createTable(string memory tableName, bytes memory schema) public {
     Table table = new Table(tableName);
     address tableAddr = address(table);
     table.setSchema(RLP.Element(schema, RLP.FLAG_TYPE_LIST));
     _tables[tableAddr] = table;
     emit TableCreated(tableAddr, tableName, schema);
-    return tableAddr;
   }
 
   /**

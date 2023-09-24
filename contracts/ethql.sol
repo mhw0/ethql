@@ -4,8 +4,6 @@ pragma solidity ^0.8.19;
 import {RLP} from "./rlp.sol";
 import {Table} from "./table.sol";
 
-import "hardhat/console.sol";
-
 contract ETHQL {
   /* Holds table addresses */
   mapping(address => Table) public _tables;

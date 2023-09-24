@@ -12,14 +12,20 @@ library RLP {
   }
 
   function isStringImpl(RLP.Element memory rlp) internal pure returns(bool) {
+    if (rlp.data.length == 0)
+      return (rlp.flags & RLP.FLAG_TYPE_STRING) != 0;
+
     return (rlp.data[0] >= 0x00 && rlp.data[0] <= 0x7f)
-      || (rlp.data[0] >= 0x80 && rlp.data[0] <= 0xb7)
-      || (rlp.data[0] >= 0xb8 && rlp.data[0] <= 0xbf);
+        || (rlp.data[0] >= 0x80 && rlp.data[0] <= 0xb7)
+        || (rlp.data[0] >= 0xb8 && rlp.data[0] <= 0xbf);
   }
   
   function isListImpl(RLP.Element memory rlp) internal pure returns(bool) {
+    if (rlp.data.length == 0)
+      return (rlp.flags & RLP.FLAG_TYPE_LIST) != 0;
+
     return (rlp.data[0] >= 0xc0 && rlp.data[0] <= 0xf7)
-      || (rlp.data[0] >= 0xf8 && rlp.data[0] <= 0xff);
+        || (rlp.data[0] >= 0xf8 && rlp.data[0] <= 0xff);
   }
 
   function getLengthImpl(RLP.Element memory rlp) internal pure returns(uint) {
@@ -55,7 +61,7 @@ library RLP {
   }
 
   function unshift(RLP.Element memory dest, RLP.Element memory target) public pure returns(RLP.Element memory) {
-    // require(RLP.isListImpl(dest), "RLP: Expected list");
+    require(RLP.isListImpl(dest), "RLP: Expected list");
     return RLP.Element(abi.encodePacked(dest.data, target.data), RLP.FLAG_TYPE_LIST);
   }
 

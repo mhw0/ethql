@@ -34,7 +34,7 @@ async function main() {
   const ETHQL = await ethers.getContractFactory("contracts/ethql.sol:ETHQL", {libraries: {RLP: rlp}});
   const ethql = await ETHQL.deploy()
 
-  const tableName = "Users";
+  const tableName = "TableName";
   // FIXME(mhw0): this should be list of pairs not list of list of pairs
   const tableSchema = RLP.encode([[["id", "uint32"], ["text", "string"], ["user_id", "uint32"]]]);
   const tableDeployTxn = await ethql.getFunction("createTable").send(tableName, tableSchema);
@@ -59,7 +59,7 @@ async function main() {
   ];
   const rowBytes = serialize(rows);
 
-  console.log("Inserting:\n", rows);
+  console.log("Bulk inserting:\n", rows);
   console.log("RLP encoded:", "0x" + Buffer.from(rowBytes).toString("hex"), "(" + rowBytes.length + " bytes)")
   console.log("---------------------------");
 
@@ -67,7 +67,6 @@ async function main() {
   await txn.wait();
 
   const select = await ethql.getFunction("select")(tableAddress);
-  console.log("0x" + Buffer.from(rowBytes).toString("hex"));
 
   console.log("Recovering data from blockchain:", select, "(" + select.length + " bytes)")
   console.log("After deserializing the recovered data by schema:\n", deserialize(select));

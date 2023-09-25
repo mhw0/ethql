@@ -32,11 +32,6 @@ library RLP {
       dest.data.push(target.data[i]);
   }
   
-  function isListImpl(bytes memory data) internal pure returns(bool) {
-    return (data[0] >= 0xc0 && data[0] <= 0xf7)
-        || (data[0] >= 0xf8 && data[0] <= 0xff);
-  }
-
   function unpackImpl(bytes memory data) internal pure returns(uint, uint, uint) {
     if (data[0] >= 0x00 && data[0] <= 0x7f)
       return (RLP.KIND_STRING, uint(uint8(data[0])), 1);

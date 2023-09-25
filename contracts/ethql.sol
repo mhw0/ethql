@@ -90,6 +90,6 @@ contract ETHQL {
     Table targetTable = _tables[tableAddr];
     require(targetTable.isTable(), "Table does not exist");
 
-    return targetTable.select();
+    return RLP.deserialize(targetTable.selectWithSchema());
   }
 }

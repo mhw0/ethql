@@ -15,19 +15,19 @@ contract Table {
     schema = RLP.loadFromBytes(_schema);
   }
 
-  function insert(RLP.Element memory _row) external {
-    RLP.push(data, _row);
+  function insert(RLP.Element memory row) external {
+    RLP.lhsPush(data, row);
   }
 
   function bulkInsert(RLP.Element memory rows) external {
-    RLP.concatLhs(data, rows);
+    RLP.lhsConcat(data, rows);
   }
 
   function setSchema(RLP.Element memory _schema) external {
     schema = _schema;
   }
 
-  function select() public view returns(bytes memory) {
-    return RLP.deserialize(RLP.unshift(schema, data));
+  function selectWithSchema() public view returns(RLP.Element memory) {
+    return RLP.concat(schema, data);
   }
 }

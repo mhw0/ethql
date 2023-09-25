@@ -10,8 +10,9 @@ contract Table {
   RLP.Element public data = RLP.Element(RLP.KIND_LIST, "");
   RLP.Element public schema;
 
-  constructor(string memory _name) {
+  constructor(string memory _name, bytes memory _schema) {
     name = _name;
+    schema = RLP.loadFromBytes(_schema);
   }
 
   function insert(RLP.Element memory _row) external {

@@ -33,9 +33,8 @@ contract ETHQL {
    * @param schema - Schema of the table in RLP format
    */
   function createTable(string memory tableName, bytes memory schema) public {
-    Table table = new Table(tableName);
+    Table table = new Table(tableName, schema);
     address tableAddr = address(table);
-    table.setSchema(RLP.loadFromBytes(schema));
     _tables[tableAddr] = table;
     emit TableCreated(tableAddr, tableName, schema);
   }

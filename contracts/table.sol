@@ -7,7 +7,7 @@ contract Table {
   bool public constant isTable = true;
   string public name;
 
-  RLP.Element public data = RLP.Element("", RLP.FLAG_TYPE_LIST);
+  RLP.Element public data = RLP.Element(RLP.KIND_LIST, "");
   RLP.Element public schema;
 
   constructor(string memory _name) {

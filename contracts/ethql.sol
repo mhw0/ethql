@@ -35,7 +35,7 @@ contract ETHQL {
   function createTable(string memory tableName, bytes memory schema) public {
     Table table = new Table(tableName);
     address tableAddr = address(table);
-    table.setSchema(RLP.Element(schema, RLP.FLAG_TYPE_LIST));
+    table.setSchema(RLP.loadFromBytes(schema));
     _tables[tableAddr] = table;
     emit TableCreated(tableAddr, tableName, schema);
   }
@@ -50,7 +50,7 @@ contract ETHQL {
     Table targetTable = _tables[tableAddr];
     require(targetTable.isTable() == true, "Table does not exist");
 
-    targetTable.insert(RLP.Element(data, RLP.FLAG_TYPE_LIST));
+    targetTable.insert(RLP.loadFromBytes(data));
     emit Inserted(tableAddr, data);
   }
 
@@ -64,7 +64,7 @@ contract ETHQL {
     Table targetTable = _tables[tableAddr];
     require(targetTable.isTable() == true, "Table does not exist");
 
-    targetTable.bulkInsert(RLP.Element(data, RLP.FLAG_TYPE_LIST));
+    targetTable.bulkInsert(RLP.loadFromBytes(data));
     emit BulkInserted(tableAddr, data);
   }
 
@@ -78,7 +78,7 @@ contract ETHQL {
     Table targetTable = _tables[tableAddr];
     require(targetTable.isTable(), "Table does not exist");
 
-    targetTable.setSchema(RLP.Element(schema, RLP.FLAG_TYPE_LIST));
+    targetTable.setSchema(RLP.loadFromBytes(schema));
     emit TableSchemaSet(tableAddr, schema);
   }
 

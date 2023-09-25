@@ -2,75 +2,67 @@
 pragma solidity ^0.8.19;
 
 library RLP {
-  uint constant FLAG_TYPE_LIST = 0x01 << 0x00;
-  uint constant FLAG_TYPE_DUMMY = 0x01 << 0x01;
-  uint constant FLAG_TYPE_STRING = 0x01 << 0x02;
+  // TODO(mhw0): we could use enum here but ethers complains about it
+  uint constant KIND_INVALID = 0x01 << 0x00;
+  uint constant KIND_STRING = 0x01 << 0x01;
+  uint constant KIND_LIST = 0x01 << 0x02;
 
+  /* Stores RLP element data */
   struct Element {
+    uint kind;
     bytes data;
-    uint flags;
   }
 
-  function isStringImpl(RLP.Element memory rlp) internal pure returns(bool) {
-    if (rlp.data.length == 0)
-      return (rlp.flags & RLP.FLAG_TYPE_STRING) != 0;
+  function loadFromBytesImpl(bytes memory data) internal pure returns(RLP.Element memory) {
+    (uint kind, uint len, uint prefixBytes) = RLP.unpackImpl(data);
+    bytes memory buf = new bytes(data.length - prefixBytes);
 
-    return (rlp.data[0] >= 0x00 && rlp.data[0] <= 0x7f)
-        || (rlp.data[0] >= 0x80 && rlp.data[0] <= 0xb7)
-        || (rlp.data[0] >= 0xb8 && rlp.data[0] <= 0xbf);
+    for(uint i = 0; i < len; i++)
+      buf[i] = data[i + prefixBytes];
+
+    return RLP.Element(kind, buf);
+  }
+
+  function loadFromBytes(bytes memory data) external pure returns(RLP.Element memory) {
+    return RLP.loadFromBytesImpl(data);
   }
 
   function concatLhs(RLP.Element storage dest, RLP.Element memory target) external {
-    (uint len,uint lookaheadBytes) = RLP.getLengthImpl(target);
-
-    for(uint i = 0; i < len; i++)
-      dest.data.push(target.data[lookaheadBytes + i]);
+    for(uint i = 0; i < target.data.length; i++)
+      dest.data.push(target.data[i]);
   }
   
-  function isListImpl(RLP.Element memory rlp) internal pure returns(bool) {
-    if (rlp.data.length == 0)
-      return (rlp.flags & RLP.FLAG_TYPE_LIST) != 0;
-
-    return (rlp.data[0] >= 0xc0 && rlp.data[0] <= 0xf7)
-        || (rlp.data[0] >= 0xf8 && rlp.data[0] <= 0xff);
+  function isListImpl(bytes memory data) internal pure returns(bool) {
+    return (data[0] >= 0xc0 && data[0] <= 0xf7)
+        || (data[0] >= 0xf8 && data[0] <= 0xff);
   }
 
-  function getLengthImpl(RLP.Element memory rlp) internal pure returns(uint, uint) {
-    if (rlp.data[0] >= 0x00 && rlp.data[0] <= 0x7f)
-      return (uint(uint8(rlp.data[0])), 1);
-    else if (rlp.data[0] >= 0x80 && rlp.data[0] <= 0xb7)
-      return (uint(uint8(rlp.data[0])) - 0x80, 1);
-    else if (rlp.data[0] >= 0xc0 && rlp.data[0] <= 0xf7)
-      return (uint(uint8(rlp.data[0])) - 0xc0, 1);
-    else if ((rlp.data[0] >= 0xb8 && rlp.data[0] <= 0xbf)
-        || (rlp.data[0] >= 0xf8 && rlp.data[0] <= 0xff)) {
-      uint base = uint(uint8(rlp.data[0] > 0xf8 ? 0xf7 : 0xb7));
-      uint lookaheadBytes = uint8(rlp.data[0]) - base;
+  function unpackImpl(bytes memory data) internal pure returns(uint, uint, uint) {
+    if (data[0] >= 0x00 && data[0] <= 0x7f)
+      return (RLP.KIND_STRING, uint(uint8(data[0])), 1);
+    else if ((data[0] >= 0x80 && data[0] <= 0xb7) || (data[0] >= 0xc0 && data[0] <= 0xf7)) {
+      uint kind = data[0] <= 0xb7 ? RLP.KIND_STRING : RLP.KIND_LIST;
+      uint base = kind == RLP.KIND_STRING ? 0x80 : 0xc0;
+      return (kind, uint8(data[0]) - base, 1);
+    } else if ((data[0] >= 0xb8 && data[0] <= 0xbf) || (data[0] >= 0xf8 && data[0] <= 0xff)) {
+      uint kind = data[0] <= 0xbf ? RLP.KIND_STRING : RLP.KIND_LIST;
+      uint base = kind == RLP.KIND_STRING ? 0xb7 : 0xf7;
+      uint lookaheadBytes = uint8(data[0]) - base;
       uint len = 0;
+
       for(uint i = 0; i < lookaheadBytes; i++)
-        len |= (uint(uint8(rlp.data[0])) << ((lookaheadBytes - i) * 0x08));
-      return (len, lookaheadBytes);
+        len |= (uint8(data[i + 1]) << (lookaheadBytes - 1 - (i * 0x08)));
+
+      return (kind, len, lookaheadBytes + 1);
     }
 
-    return (0, 0);
-  }
-
-  function getLength(RLP.Element memory rlp) public pure returns(uint) {
-    (uint len,) = RLP.getLengthImpl(rlp);
-    return len;
-  }
-
-  function isList(RLP.Element memory rlp) public pure returns(bool) {
-    return RLP.isListImpl(rlp);
-  }
-
-  function isString(RLP.Element memory rlp) public pure returns(bool) {
-    return RLP.isStringImpl(rlp);
+    require(false, "RLP: invalid prefix");
+    return (RLP.KIND_INVALID, 0, 0); // to bypass the warning
   }
 
   function unshift(RLP.Element memory dest, RLP.Element memory target) public pure returns(RLP.Element memory) {
-    require(RLP.isListImpl(dest), "RLP: Expected list");
-    return RLP.Element(abi.encodePacked(dest.data, target.data), RLP.FLAG_TYPE_LIST);
+    require(dest.kind == RLP.KIND_LIST, "RLP: Expected list");
+    return RLP.Element(dest.kind, abi.encodePacked(dest.data, target.data));
   }
 
   function push(RLP.Element storage dest, RLP.Element memory target) public {
@@ -79,8 +71,6 @@ library RLP {
   }
 
   function encodeLookaheadLengthImpl(uint8 base, uint len) internal pure returns(bytes memory) {
-    return abi.encodePacked(uint8(base));
-
     if (len <= 0xFF)
       return abi.encodePacked(base + 0x01, uint8(len));
     else if (len <= 0xFFFF)
@@ -90,23 +80,27 @@ library RLP {
     else if (len <= 0xFFFFFFFFFFFFFFFF)
       return abi.encodePacked(base + 0x08, uint8((len >> 0x38) & 0xFF), uint8((len >> 0x30) & 0xFF), uint8((len >> 0x28) & 0xFF), uint8((len >> 0x20) & 0xFF), uint8((len >> 0x18) & 0xFF), uint8((len >> 0x10) & 0xFF), uint8((len >> 0x08) & 0xFF), uint8(len & 0xFF));
 
-    require(false, "RLP: too big RLP data");
+    require(false, "RLP: too big data");
   }
 
   function encodeFixedLengthImpl(uint8 base, uint8 len) internal pure returns(bytes memory) {
     return abi.encodePacked(base + len);
   }
 
-  function deserialize(RLP.Element memory element) public pure returns (bytes memory) {
+  function deserialize(RLP.Element memory element) external pure returns(bytes memory) {
+    return RLP.deserializeImpl(element);
+  }
+
+  function deserializeImpl(RLP.Element memory element) internal pure returns (bytes memory) {
     bytes memory data = element.data;
 
     // TODO(mhw0): refactor me
-    if ((element.flags & RLP.FLAG_TYPE_LIST) != 0) {
+    if (element.kind == RLP.KIND_LIST) {
       bytes memory len = data.length <= 0x37
         ? RLP.encodeFixedLengthImpl(0xc0, uint8(data.length))
         : RLP.encodeLookaheadLengthImpl(0xf7, data.length);
       return abi.encodePacked(len, data);
-    } else if ((element.flags & RLP.FLAG_TYPE_STRING) != 0) {
+    } else if (element.kind == RLP.KIND_STRING) {
       bytes memory len = data.length <= 0x37
         ? RLP.encodeFixedLengthImpl(0x80, uint8(data.length))
         : RLP.encodeLookaheadLengthImpl(0xb7, data.length);

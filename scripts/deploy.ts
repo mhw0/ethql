@@ -35,7 +35,8 @@ async function main() {
   const ethql = await ETHQL.deploy()
 
   const tableName = "Users";
-  const tableSchema = RLP.encode([["id", "uint32"], ["text", "string"], ["user_id", "uint32"]]);
+  // FIXME(mhw0): this should be list of pairs not list of list of pairs
+  const tableSchema = RLP.encode([[["id", "uint32"], ["text", "string"], ["user_id", "uint32"]]]);
   const tableDeployTxn = await ethql.getFunction("createTable").send(tableName, tableSchema);
   const tableDeployReceipt = await tableDeployTxn.wait();
   const tableAddress = (tableDeployReceipt!.logs[0] as any)["args"][0]; // TODO: not good
@@ -44,12 +45,21 @@ async function main() {
 
   const rows = [
     {"id": 1, "text": "a", "user_id": 1},
-    {"id": 1, "text": "a", "user_id": 1},
-    {"id": 1, "text": "a", "user_id": 1}
+    {"id": 2, "text": "a", "user_id": 2},
+    {"id": 3, "text": "a", "user_id": 3},
+    {"id": 4, "text": "a", "user_id": 4},
+    {"id": 5, "text": "a", "user_id": 5},
+    {"id": 6, "text": "a", "user_id": 6},
+    {"id": 7, "text": "a", "user_id": 7},
+    {"id": 8, "text": "a", "user_id": 8},
+    {"id": 9, "text": "a", "user_id": 9},
+    {"id": 10, "text": "a", "user_id": 10},
+    {"id": 11, "text": "a", "user_id": 11},
+    {"id": 12, "text": "a", "user_id": 12},
   ];
   const rowBytes = serialize(rows);
 
-  console.log("Inserting:\n ", rows);
+  console.log("Inserting:\n", rows);
   console.log("RLP encoded:", "0x" + Buffer.from(rowBytes).toString("hex"), "(" + rowBytes.length + " bytes)")
   console.log("---------------------------");
 
@@ -57,9 +67,10 @@ async function main() {
   await txn.wait();
 
   const select = await ethql.getFunction("select")(tableAddress);
+  console.log("0x" + Buffer.from(rowBytes).toString("hex"));
 
   console.log("Recovering data from blockchain:", select, "(" + select.length + " bytes)")
-  console.log("After deserializing the recovered data by schema:\n ", deserialize(select));
+  console.log("After deserializing the recovered data by schema:\n", deserialize(select));
 }
 
 main().catch((error) => {

@@ -9,22 +9,22 @@ contract ETHQL {
   mapping(address => Table) public _tables;
 
   /* Emitted when a new row is inserted */
-  event Inserted(address indexed tableAddr, bytes indexed data);
+  event Inserted(address indexed tableAddr, bytes data);
 
   /* Emitted when many rows are inserted */
-  event BulkInserted(address indexed tableAddr, bytes indexed data);
+  event BulkInserted(address indexed tableAddr, bytes data);
 
   /* Emitted when many new row are inserted */
-  event InsertedMany(address indexed tableAddr, bytes indexed data);
+  event InsertedMany(address indexed tableAddr, bytes data);
 
   /* Emitted when a row is deleted */
-  event Deleted(address indexed tableAddr, bytes indexed data);
+  event Deleted(address indexed tableAddr, bytes data);
 
   /* Emitted when a new schema is set for the table */
-  event TableSchemaSet(address indexed tableAddr, bytes indexed schema);
+  event TableSchemaSet(address indexed tableAddr, bytes schema);
 
   /* Emitted when a new table is created */
-  event TableCreated(address tableAddr, string tableName, bytes schema);
+  event TableCreated(address indexed tableAddr, string tableName, bytes schema);
 
   /**
    * Creates a new table by deploying a new contract

@@ -46,7 +46,7 @@ library RLP {
       uint len = 0;
 
       for(uint i = 0; i < lookaheadBytes; i++)
-        len |= (uint8(data[i + 1]) << (lookaheadBytes - 1 - (i * 0x08)));
+        len |= (uint(uint8(data[i + 1])) << (lookaheadBytes - 1 - (i * 0x08)));
 
       return (kind, len, lookaheadBytes + 1);
     }

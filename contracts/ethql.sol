@@ -14,9 +14,6 @@ contract ETHQL {
   /* Emitted when many rows are inserted */
   event BulkInserted(address indexed tableAddr, bytes data);
 
-  /* Emitted when many new row are inserted */
-  event InsertedMany(address indexed tableAddr, bytes data);
-
   /* Emitted when a row is deleted */
   event Deleted(address indexed tableAddr, bytes data);
 

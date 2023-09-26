@@ -21,10 +21,10 @@ async function main() {
   console.log(`Table named "${tableName}" deployed at: ${tableAddress}`);
 
   const rows = [
-    {"id": 1, "text": "a", "is_active": 1},
-    {"id": 1, "text": "a", "is_active": 0},
-    {"id": 1, "text": "a", "is_active": 0},
-    {"id": 1, "text": "a", "is_active": 0}
+    {"id": 1, "text": "a", "is_active": true},
+    {"id": 1, "text": "a", "is_active": false},
+    {"id": 1, "text": "a", "is_active": false},
+    {"id": 1, "text": "a", "is_active": false}
   ];
   const rowBytes = serialize(rows);
 

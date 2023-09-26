@@ -1,6 +1,5 @@
 import {ethers} from "hardhat";
 import {serialize, deserialize, createSchema, SchemaType} from "./bin";
-import RLP from "rlp";
 
 async function main() {
   const RLPLibrary = await ethers.getContractFactory("contracts/rlp.sol:RLP");
@@ -9,11 +8,7 @@ async function main() {
   const ethql = await ETHQL.deploy()
 
   const tableName = "TableName";
-  const tableSchema = createSchema({
-    id: SchemaType.UINT64,
-    text: SchemaType.STRING,
-    is_active: SchemaType.BOOL
-  });
+  const tableSchema = createSchema({ id: SchemaType.UINT64, text: SchemaType.STRING, is_active: SchemaType.BOOL });
   const tableDeployTxn = await ethql.getFunction("createTable").send(tableName, tableSchema);
   const tableDeployReceipt = await tableDeployTxn.wait();
   const tableAddress = (tableDeployReceipt!.logs[0] as any)["args"][0]; // TODO: not good
@@ -24,7 +19,7 @@ async function main() {
     {"id": 1, "text": "a", "is_active": true},
     {"id": 1, "text": "a", "is_active": false},
     {"id": 1, "text": "a", "is_active": false},
-    {"id": 1, "text": "a", "is_active": false}
+    {"id": 1, "text": "a", "is_active": false},
   ];
   const rowBytes = serialize(rows);
 

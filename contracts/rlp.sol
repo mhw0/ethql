@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+import "hardhat/console.sol";
+
 library RLP {
   uint constant KIND_STRING = 0x01 << 0x00;
   uint constant KIND_LIST = 0x01 << 0x01;
@@ -11,7 +13,7 @@ library RLP {
   }
 
   function loadFromBytesImpl(bytes memory data) internal pure returns(RLP.Element memory) {
-    (uint kind, uint len, uint prefixBytes) = RLP.decodeLength(data);
+    (uint kind, uint len, uint prefixBytes) = RLP.decodeLengthImpl(data);
     bytes memory buf = new bytes(data.length - prefixBytes);
 
     for(uint i = 0; i < len; i++)
@@ -20,7 +22,7 @@ library RLP {
     return RLP.Element(kind, buf);
   }
 
-  function decodeLength(bytes memory data) internal pure returns(uint, uint, uint) {
+  function decodeLengthImpl(bytes memory data) internal pure returns(uint, uint, uint) {
     if (data[0] >= 0x00 && data[0] <= 0x7F)
       return (RLP.KIND_STRING, uint(uint8(data[0])), 1);
     else if ((data[0] >= 0x80 && data[0] <= 0xB7) || (data[0] >= 0xC0 && data[0] <= 0xF7)) {
@@ -34,7 +36,7 @@ library RLP {
       uint len = 0;
 
       for(uint i = 0; i < lookaheadBytes; i++)
-        len |= (uint(uint8(data[i + 1])) << (lookaheadBytes - 1 - (i * 0x08)));
+        len |= (uint(uint8(data[i + 1])) << ((lookaheadBytes - i - 1) * 0x08));
 
       return (kind, len, lookaheadBytes + 1);
     }
@@ -51,11 +53,13 @@ library RLP {
     else if (len <= 0xFF)
       return abi.encodePacked(base + 0x01, uint8(len));
     else if (len <= 0xFFFF)
-      return abi.encodePacked(base + 0x02, (len >> 0x08) & 0xFF, len & 0xFF);
+      return abi.encodePacked(base + 0x02, uint8((len >> 0x08) & 0xFF), uint8(len & 0xFF));
     else if (len <= 0xFFFFFFFF)
-      return abi.encodePacked(base + 0x04, (len >> 0x18) & 0xFF, (len >> 0x10) & 0xFF, (len >> 0x08) & 0xFF, len & 0xFF);
+      return abi.encodePacked(base + 0x04, uint8((len >> 0x18) & 0xFF), uint8((len >> 0x10) & 0xFF), uint8((len >> 0x08) & 0xFF), uint8(len & 0xFF));
     else if (len <= 0xFFFFFFFFFFFFFFFF)
-      return abi.encodePacked(base + 0x08, (len >> 0x38) & 0xFF, (len >> 0x30) & 0xFF, (len >> 0x28) & 0xFF, (len >> 0x20) & 0xFF, (len >> 0x18) & 0xFF, (len >> 0x10) & 0xFF, (len >> 0x08) & 0xFF, len & 0xFF);
+      return abi.encodePacked(base + 0x08, uint8((len >> 0x38) & 0xFF), uint8((len >> 0x30) & 0xFF), uint8((len >> 0x28) & 0xFF), uint8((len >> 0x20) & 0xFF), uint8((len >> 0x18) & 0xFF), uint8((len >> 0x10) & 0xFF), uint8((len >> 0x08) & 0xFF), uint8(len & 0xFF));
+
+    // TODO(mhw0): we could actually go beyond
 
     revert("RLP: length is too big");
   }

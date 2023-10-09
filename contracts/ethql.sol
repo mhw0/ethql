@@ -43,9 +43,9 @@ contract ETHQL {
    * @param data - Data itself
    */
   function insert(address tableAddr, bytes memory data) external {
-    Table targetTable = _tables[tableAddr];
-    require(targetTable.isTable() == true, "Table does not exist");
+    ensureTableAddr(tableAddr);
 
+    Table targetTable = _tables[tableAddr];
     targetTable.insert(RLP.loadFromBytes(data));
     emit Inserted(tableAddr, data);
   }
@@ -57,11 +57,17 @@ contract ETHQL {
    * @param data - List of rows in RLP format
    */
   function bulkInsert(address tableAddr, bytes memory data) external {
-    Table targetTable = _tables[tableAddr];
-    require(targetTable.isTable() == true, "Table does not exist");
+    ensureTableAddr(tableAddr);
 
+    Table targetTable = _tables[tableAddr];
     targetTable.bulkInsert(RLP.loadFromBytes(data));
     emit BulkInserted(tableAddr, data);
+  }
+
+  function ensureTableAddr(address tableAddr) internal view {
+    uint32 contractsize;
+    assembly { contractsize := extcodehash(tableAddr) }
+    require(contractsize > 0, "Table does not exist");
   }
 
   /**
@@ -71,9 +77,9 @@ contract ETHQL {
    * @param schema - New schema to set to
    */
   function setSchemaForTable(address tableAddr, bytes memory schema) public {
-    Table targetTable = _tables[tableAddr];
-    require(targetTable.isTable(), "Table does not exist");
+    ensureTableAddr(tableAddr);
 
+    Table targetTable = _tables[tableAddr];
     targetTable.setSchema(RLP.loadFromBytes(schema));
     emit TableSchemaSet(tableAddr, schema);
   }
@@ -84,9 +90,9 @@ contract ETHQL {
    * @param tableAddr - Address of the table
    */
   function select(address tableAddr) public view returns(bytes memory) {
-    Table targetTable = _tables[tableAddr];
-    require(targetTable.isTable(), "Table does not exist");
+    ensureTableAddr(tableAddr);
 
+    Table targetTable = _tables[tableAddr];
     return RLP.deserialize(targetTable.selectWithSchema());
   }
 }

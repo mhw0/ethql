@@ -4,7 +4,6 @@ pragma solidity ^0.8.19;
 import {RLP} from "./rlp.sol";
 
 contract Table {
-  bool public constant isTable = true;
   string public name;
 
   RLP.Element public data = RLP.Element(RLP.KIND_LIST, "");

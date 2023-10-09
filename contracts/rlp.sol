@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "hardhat/console.sol";
-
 library RLP {
   uint constant KIND_STRING = 0x01 << 0x00;
   uint constant KIND_LIST = 0x01 << 0x01;

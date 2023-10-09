@@ -10,16 +10,20 @@ async function main() {
   const tableName = "TableName";
   const tableSchema = createSchema({ id: SchemaType.UINT64, text: SchemaType.STRING, is_active: SchemaType.BOOL });
   const tableDeployTxn = await ethql.getFunction("createTable").send(tableName, tableSchema);
+
   const tableDeployReceipt = await tableDeployTxn.wait();
+  console.log(tableDeployReceipt.gasUsed);
   const tableAddress = (tableDeployReceipt!.logs[0] as any)["args"][0]; // TODO: not good
 
-  console.log(`Table named "${tableName}" deployed at: ${tableAddress}`);
+  console.log(`Table named "${tableName}" deployed at: ${tableAddress} (took ${tableDeployReceipt.gasUsed} gas)`);
 
   const rows = [
     {"id": 1, "text": "a", "is_active": true},
     {"id": 1, "text": "a", "is_active": false},
     {"id": 1, "text": "a", "is_active": false},
     {"id": 1, "text": "a", "is_active": false},
+    {"id": 1, "text": "a", "is_active": false},
+    {"id": 1, "text": "a", "is_active": false}
   ];
   const rowBytes = serialize(rows);
 
